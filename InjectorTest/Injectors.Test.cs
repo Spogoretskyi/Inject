@@ -24,32 +24,35 @@ namespace Injectors.Test
         [Test]
         public void ResolveWithNoParams()
         {
-            var subject = (TestA)Injector.Resolve(typeof(TestA));
+            Injector.Register<TestA, TestA>(n => new TestA());
+            var subject = Injector.Resolve<TestA>();
             Assert.IsInstanceOf<TestA>(subject);
         }
         [Test]
         public void ResolveWithParams()
         {
-            var subject = (TestB)Injector.Resolve(typeof(TestB));
-            Assert.IsInstanceOf<TestA>(subject.A);
+            Injector.Register<TestA, TestA>(n => new TestA());
+            Injector.Register<TestB, TestB>(n =>
+            {
+              var param = Injector.Resolve<TestB>();
+              return new TestB(param);
+            });
+            var subject = Injector.Resolve<TestB>();
+            Assert.IsInstanceOf(typeof(TestA), subject.A);
         }
         [Test]
         public void ItAllowsAParametrelessConstructor()
         {
-            var subject = (TestC)Injector.Resolve(typeof(TestC));
+            Injector.Register<TestC, TestC>(n => new TestC());
+            var subject = Injector.Resolve<TestC>();
             Assert.IsTrue(subject.Invoked);
         }
-        [Test]
-        public void ItAllowsGenericInitialization()
-        {
-            var subject = Injector.Resolve<TestA>();
-            Assert.IsInstanceOf(typeof(TestA), subject);
-        }
+
         class TestA
         {
             
         }
-        class TestB
+        class TestB : TestA
         {
             public TestA A { get; }
             public TestB()
@@ -77,7 +80,7 @@ namespace Injectors.Test
         [Test]
         public void RegisterATypeFromAnInterface()
         {
-            Injector.Register<IConstruction, Skyscraper>();
+            Injector.Register<IConstruction, Skyscraper>(n => new Skyscraper());
             var subject = Injector.Resolve<IConstruction>();
             Assert.IsInstanceOf<Skyscraper>(subject);
         }
@@ -85,11 +88,14 @@ namespace Injectors.Test
         [Test]
         public void InitializeObjectWithDependencies()
         {
-            Injector.Register<IConstruction, Mall>();
-            var subject = (Mall)Injector.Resolve<IConstruction>();
+            Injector.Register<IConstruction, Mall>(c =>
+            {
+                var p1 = c.Resolve<Skyscraper>();
+                return new Mall();
+            });
+            var subject = Injector.Resolve<IConstruction>();
             Assert.IsInstanceOf<Building>(subject);
         }
-
         interface IConstruction
         {
             string Type { get; }
@@ -115,7 +121,6 @@ namespace Injectors.Test
             public new double Height => 60.0;
             public new double Width => 860.0;
         }
-
     }
 
     [TestFixture]
@@ -124,17 +129,19 @@ namespace Injectors.Test
         [Test]
         public void ReturnsASingleInstance()
         {
-            var food = new Food();
-            Injector.RegisterSingleton(food);
-            var subject = Injector.Resolve<Food>();
+            var food = new Milk();
+            Injector.Register<Milk, Milk>(n => food);
+            var subject = Injector.Resolve<Milk>();
             Assert.AreEqual(subject, food);
         }
-
-        class Food
+        abstract class Food
         {
             
         }
 
+        class Milk : Food
+        {
+            
+        }
     }
-
 }

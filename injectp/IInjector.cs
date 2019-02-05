@@ -2,12 +2,9 @@
 
 namespace injects
 {
-    interface IInjector
+    public interface IInjector
     {
-        void Register<TypeIn, TypeOut>() where TypeOut : TypeIn;
-        void RegisterSingleton<T>(T obj);
-        void Register<T>(T type);
-        T Resolve<T>();
-        object Resolve(Type type);
+        void Register<TypeIn, TypeOut>(Func<IInjector, object> fn) where TypeOut : TypeIn;
+        T Resolve<T>() where T : class;
     }
 }
